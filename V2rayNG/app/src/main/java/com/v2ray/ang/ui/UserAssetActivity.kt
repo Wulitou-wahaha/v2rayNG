@@ -80,17 +80,28 @@ class UserAssetActivity : HelperBaseActivity() {
     }
 
     private fun setGeoFilesSources() {
-        val items = AppConfig.GEO_FILES_SOURCES.toMutableList().apply {
-            add(getString(R.string.asset_geo_files_sources_custom)) 
-        }.toTypedArray()
+        val itemsList = AppConfig.GEO_FILES_SOURCES.toMutableList()
+        val savedCustomSources = MmkvManager.getCustomGeoSources()
+        itemsList.addAll(savedCustomSources)
+        val customActionText = getString(R.string.asset_geo_files_sources_custom)
+        itemsList.add(customActionText)
+        val items = itemsList.toTypedArray()
 
         AlertDialog.Builder(this).setItems(items) { _, i ->
             try {
-                if (i == items.lastIndex) {
-                    showCustomSourceInputDialog()
-                } else {
-                    val value = AppConfig.GEO_FILES_SOURCES[i]
-                    saveAndRefreshGeoSource(value)
+                when {
+                    i == items.lastIndex -> {
+                        showCustomSourceInputDialog()
+                    }
+                    i < AppConfig.GEO_FILES_SOURCES.size -> {
+                        val value = AppConfig.GEO_FILES_SOURCES[i]
+                        saveAndRefreshGeoSource(value)
+                    }
+                    else -> {
+                        val customIndex = i - AppConfig.GEO_FILES_SOURCES.size
+                        val value = savedCustomSources[customIndex]
+                        saveAndRefreshGeoSource(value)
+                    }
                 }
             } catch (e: Exception) {
                 LogUtil.e(AppConfig.TAG, "Failed to set geo files sources", e)
@@ -118,6 +129,7 @@ class UserAssetActivity : HelperBaseActivity() {
             .setPositiveButton(android.R.string.ok) { dialog, _ -> 
                 val customUrl = input.text.toString().trim()
                 if (customUrl.isNotEmpty()) {
+                    MmkvManager.addCustomGeoSource(customUrl)
                     saveAndRefreshGeoSource(customUrl)
                 }
                 dialog.dismiss()

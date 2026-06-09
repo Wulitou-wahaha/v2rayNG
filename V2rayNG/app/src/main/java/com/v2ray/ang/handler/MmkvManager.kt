@@ -468,6 +468,29 @@ object MmkvManager {
     }
 
     /**
+     * Get a list of all custom Geo sources saved by the user.
+     *
+     * @return The list of all custom Geo sources saved by the user.
+     */
+    fun getCustomGeoSources(): List<String> {
+        val set = mainStorage.decodeStringSet(AppConfig.PREF_CUSTOM_GEO_SOURCES) ?: emptySet()
+        return set.toList()
+    }
+
+    /**
+     * Add a custom Geo source and persist it
+     *
+     * @param url The custom Geo source url.
+     */
+    fun addCustomGeoSource(url: String) {
+        val currentSet = mainStorage.decodeStringSet(AppConfig.PREF_CUSTOM_GEO_SOURCES) ?: emptySet()
+        val newSet = currentSet.toMutableSet().apply {
+            add(url)
+        }
+        mainStorage.encode(AppConfig.PREF_CUSTOM_GEO_SOURCES, newSet)
+    }
+
+    /**
      * Removes the asset URL.
      *
      * @param assetid The asset ID.
