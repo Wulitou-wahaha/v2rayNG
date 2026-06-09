@@ -492,6 +492,21 @@ object MmkvManager {
     }
 
     /**
+    * Remove the specified custom Geo source
+    *
+    * @param url The custom Geo source url.
+    */
+    fun removeCustomGeoSource(url: String) {
+        val currentSet = mainStorage.decodeStringSet(PREF_CUSTOM_GEO_SOURCES) ?: emptySet()
+        if (currentSet.contains(url)) {
+            val newSet = currentSet.toMutableSet().apply {
+                remove(url)
+            }
+            mainStorage.encode(PREF_CUSTOM_GEO_SOURCES, newSet)
+        }
+    }
+
+    /**
      * Removes the asset URL.
      *
      * @param assetid The asset ID.

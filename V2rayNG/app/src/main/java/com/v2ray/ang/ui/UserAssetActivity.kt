@@ -2,6 +2,8 @@ package com.v2ray.ang.ui
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.widget.ArrayAdapter
+import android.widget.ListView
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.content.Intent
@@ -80,50 +82,94 @@ class UserAssetActivity : HelperBaseActivity() {
     }
 
     private fun setGeoFilesSources() {
+        val builtInSize = AppConfig.GEO_FILES_SOURCES.size
         val itemsList = AppConfig.GEO_FILES_SOURCES.toMutableList()
-        val savedCustomSources = MmkvManager.getCustomGeoSources()
+        var savedCustomSources = MmkvManager.getCustomGeoSources()
         itemsList.addAll(savedCustomSources)
+        
         val customActionText = getString(R.string.asset_geo_files_sources_custom)
         itemsList.add(customActionText)
-        val items = itemsList.toTypedArray()
 
-        AlertDialog.Builder(this).setItems(items) { _, i ->
+        val listView = ListView(this)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, itemsList)
+        listView.adapter = adapter
+
+        val mainDialog = AlertDialog.Builder(this)
+            .setView(listView)
+            .create()
+
+        listView.setOnItemClickListener { _, _, i, _ ->
             try {
                 when {
-                    i == items.lastIndex -> {
+                    i == itemsList.lastIndex -> {
                         showCustomSourceInputDialog()
                     }
-                    i < AppConfig.GEO_FILES_SOURCES.size -> {
+                    i < builtInSize -> {
                         val value = AppConfig.GEO_FILES_SOURCES[i]
                         saveAndRefreshGeoSource(value)
                     }
                     else -> {
-                        val customIndex = i - AppConfig.GEO_FILES_SOURCES.size
+                        val customIndex = i - builtInSize
                         val value = savedCustomSources[customIndex]
                         saveAndRefreshGeoSource(value)
                     }
                 }
             } catch (e: Exception) {
-                LogUtil.e(AppConfig.TAG, "Failed to set geo files sources", e)
+                LogUtil.e(AppConfig.TAG, "Failed to select geo files sources", e)
             }
-        }.show()
+            mainDialog.dismiss()
+        }
+
+        listView.setOnItemLongClickListener { _, _, i, _ ->
+            if (i >= builtInSize && i < itemsList.lastIndex) {
+                val customIndex = i - builtInSize
+                val targetUrl = savedCustomSources[customIndex]
+
+                AlertDialog.Builder(this@UserAssetActivity)
+                    .setTitle(getString(R.string.asset_geo_files_sources_delete_title))
+                    .setMessage(getString(R.string.asset_geo_files_sources_delete_message, targetUrl))
+                    .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                        removeCustomGeoSource(targetUrl)
+
+                        if (getGeoFilesSources() == targetUrl) {
+                            saveAndRefreshGeoSource(AppConfig.GEO_FILES_SOURCES.first())
+                        }
+                        
+                        dialog.dismiss()
+                        savedCustomSources = MmkvManager.getCustomGeoSources()
+                        itemsList.clear()
+                        itemsList.addAll(AppConfig.GEO_FILES_SOURCES)
+                        itemsList.addAll(savedCustomSources)
+                        itemsList.add(customActionText)
+                        adapter.notifyDataSetChanged() 
+                    }
+                    .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                        dialog.dismiss()
+                    }
+                    .show()
+                true 
+            } else {
+                false 
+            }
+        }
+
+        mainDialog.show()
     }
 
     private fun showCustomSourceInputDialog() {
-        val context = this
-        val input = EditText(context).apply {
+        val input = EditText(this).apply {
             setText(getGeoFilesSources())
             hint = getString(R.string.asset_geo_files_sources_input_hint)
             setSingleLine(true)
         }
 
-        val container = LinearLayout(context).apply {
+        val container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(50, 20, 50, 0)
             addView(input)
         }
 
-        AlertDialog.Builder(context)
+        AlertDialog.Builder(this)
             .setTitle(getString(R.string.asset_geo_files_sources_input_title)) 
             .setView(container)
             .setPositiveButton(android.R.string.ok) { dialog, _ -> 

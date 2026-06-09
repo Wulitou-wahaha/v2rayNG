@@ -136,7 +136,9 @@
     <string name="asset_geo_files_sources_custom">自定义输入...</string>
     <string name="asset_geo_files_sources_input_title">请输入自定义 Geo 资源链接</string>
     <string name="asset_geo_files_sources_input_hint">https://example.com/download/</string>
-
+    <string name="asset_geo_files_sources_delete_title">删除自定义源</string>
+    <string name="asset_geo_files_sources_delete_message">确定要删除此自定义链接吗？\n%1$s</string>
+    
     <!-- PerAppProxyActivity -->
     <string name="msg_dialog_progress">正在加载</string>
     <string name="menu_item_search">搜索</string>
