@@ -15,6 +15,7 @@ import java.io.File
 class UserAssetViewModel : ViewModel() {
     private val assets = mutableListOf<AssetUrlCache>()
     private val builtInGeoFiles = listOf(AppConfig.GEOSITE_DAT, AppConfig.GEOIP_DAT, AppConfig.GEOIP_ONLY_CN_PRIVATE_DAT)
+    private val customGeoFiles = listOf(AppConfig.GEOSITE_DAT, AppConfig.GEOIP_DAT)
 
     val itemCount: Int
         get() = assets.size
@@ -34,14 +35,21 @@ class UserAssetViewModel : ViewModel() {
         geoFilesSource: String
     ): List<AssetUrlCache> {
         val savedAssets = decodedAssets ?: emptyList()
-        val builtInItems = builtInGeoFiles
+
+        val isCustomUrl = geoFilesSource.startsWith("http://", ignoreCase = true) || 
+                        geoFilesSource.startsWith("https://", ignoreCase = true)
+
+        val targetGeoFiles = if (isCustomUrl) customGeoFiles else builtInGeoFiles
+
+        val builtInItems = targetGeoFiles
             .filter { geoFile -> savedAssets.none { it.assetUrl.remarks == geoFile } }
-            .map {
+            .map { it ->
+                val baseUrl = if (isCustomUrl) geoFilesSource else String.format(AppConfig.GITHUB_DOWNLOAD_URL, geoFilesSource)
                 AssetUrlCache(
                     Utils.getUuid(),
                     AssetUrlItem(
                         it,
-                        String.format(AppConfig.GITHUB_DOWNLOAD_URL, geoFilesSource).concatUrl(it),
+                        baseUrl.concatUrl(it),
                         locked = true
                     )
                 )
