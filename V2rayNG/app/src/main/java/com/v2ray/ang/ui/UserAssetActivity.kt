@@ -85,7 +85,7 @@ class UserAssetActivity : HelperBaseActivity() {
         }.toTypedArray()
 
         AlertDialog.Builder(this)
-            .setTitle(getString(R.string.asset_geo_files_sources_title))
+            .setTitle(getString(R.string.asset_geo_files_sources))
             .setItems(items) { _, i ->
                 try {
                     if (i == items.lastIndex) {

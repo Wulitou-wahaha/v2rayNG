@@ -9,8 +9,7 @@ on:
   push:
     branches:
       - master
-      - geo-custom
-      
+
 jobs:
   build:
     runs-on: ubuntu-latest
