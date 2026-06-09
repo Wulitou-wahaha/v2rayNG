@@ -135,8 +135,11 @@
     <string name="title_user_asset_add_url">Add asset URL</string>
     <string name="msg_file_not_found">File not found</string>
     <string name="msg_remark_is_duplicate">The remarks already exists</string>
-    <string name="asset_geo_files_sources">Geo files source (optional)</string>
-
+    <string name="asset_geo_files_sources_title">Choose or Customize Geo Source</string>
+    <string name="asset_geo_files_sources_custom">Custom...</string>
+    <string name="asset_geo_files_sources_input_title">Enter Custom Geo Source URL</string>
+    <string name="asset_geo_files_sources_input_hint">https://example.com/download/</string>
+    
     <!-- PerAppProxyActivity -->
     <string name="msg_dialog_progress">Loading</string>
     <string name="menu_item_search">Search</string>

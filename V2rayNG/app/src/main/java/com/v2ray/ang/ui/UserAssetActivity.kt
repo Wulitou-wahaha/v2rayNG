@@ -2,6 +2,8 @@ package com.v2ray.ang.ui
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.widget.EditText
+import android.widget.LinearLayout
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -78,15 +80,59 @@ class UserAssetActivity : HelperBaseActivity() {
     }
 
     private fun setGeoFilesSources() {
-        AlertDialog.Builder(this).setItems(AppConfig.GEO_FILES_SOURCES.toTypedArray()) { _, i ->
-            try {
-                val value = AppConfig.GEO_FILES_SOURCES[i]
-                MmkvManager.encodeSettings(AppConfig.PREF_GEO_FILES_SOURCES, value)
-                binding.tvGeoFilesSourcesSummary.text = value
-            } catch (e: Exception) {
-                LogUtil.e(AppConfig.TAG, "Failed to set geo files sources", e)
+        val items = AppConfig.GEO_FILES_SOURCES.toMutableList().apply {
+            add(getString(R.string.asset_geo_files_sources_custom)) 
+        }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.asset_geo_files_sources_title))
+            .setItems(items) { _, i ->
+                try {
+                    if (i == items.lastIndex) {
+                        showCustomSourceInputDialog()
+                    } else {
+                        val value = AppConfig.GEO_FILES_SOURCES[i]
+                        saveAndRefreshGeoSource(value)
+                    }
+                } catch (e: Exception) {
+                    Log.e(AppConfig.TAG, "Failed to set geo files sources", e)
+                }
+            }.show()
+    }
+
+    private fun showCustomSourceInputDialog() {
+        val context = this
+        val input = EditText(context).apply {
+            setText(getGeoFilesSources())
+            hint = getString(R.string.asset_geo_files_sources_input_hint)
+            setSingleLine(true)
+        }
+
+        val container = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(50, 20, 50, 0)
+            addView(input)
+        }
+
+        AlertDialog.Builder(context)
+            .setTitle(getString(R.string.asset_geo_files_sources_input_title)) 
+            .setView(container)
+            .setPositiveButton(android.R.string.ok) { dialog, _ -> 
+                val customUrl = input.text.toString().trim()
+                if (customUrl.isNotEmpty()) {
+                    saveAndRefreshGeoSource(customUrl)
+                }
+                dialog.dismiss()
             }
-        }.show()
+            .setNegativeButton(android.R.string.cancel) { dialog, _ -> 
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    private fun saveAndRefreshGeoSource(value: String) {
+        MmkvManager.encodeSettings(AppConfig.PREF_GEO_FILES_SOURCES, value)
+        binding.tvGeoFilesSourcesSummary.text = value
     }
 
     private fun showFileChooser() {
