@@ -129,7 +129,7 @@ class UserAssetActivity : HelperBaseActivity() {
                     .setTitle(getString(R.string.asset_geo_files_sources_delete_title))
                     .setMessage(getString(R.string.asset_geo_files_sources_delete_message, targetUrl))
                     .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                        removeCustomGeoSource(targetUrl)
+                        MmkvManager.removeCustomGeoSource(targetUrl)
 
                         if (getGeoFilesSources() == targetUrl) {
                             saveAndRefreshGeoSource(AppConfig.GEO_FILES_SOURCES.first())
