@@ -84,20 +84,18 @@ class UserAssetActivity : HelperBaseActivity() {
             add(getString(R.string.asset_geo_files_sources_custom)) 
         }.toTypedArray()
 
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.asset_geo_files_sources))
-            .setItems(items) { _, i ->
-                try {
-                    if (i == items.lastIndex) {
-                        showCustomSourceInputDialog()
-                    } else {
-                        val value = AppConfig.GEO_FILES_SOURCES[i]
-                        saveAndRefreshGeoSource(value)
-                    }
-                } catch (e: Exception) {
-                    Log.e(AppConfig.TAG, "Failed to set geo files sources", e)
+        AlertDialog.Builder(this).setItems(items) { _, i ->
+            try {
+                if (i == items.lastIndex) {
+                    showCustomSourceInputDialog()
+                } else {
+                    val value = AppConfig.GEO_FILES_SOURCES[i]
+                    saveAndRefreshGeoSource(value)
                 }
-            }.show()
+            } catch (e: Exception) {
+                LogUtil.e(AppConfig.TAG, "Failed to set geo files sources", e)
+            }
+        }.show()
     }
 
     private fun showCustomSourceInputDialog() {
