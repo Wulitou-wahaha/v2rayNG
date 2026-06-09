@@ -1,6 +1,7 @@
 package com.v2ray.ang.handler
 
 import com.tencent.mmkv.MMKV
+import com.v2ray.ang.AppConfig.PREF_CUSTOM_GEO_SOURCES
 import com.v2ray.ang.AppConfig.DEFAULT_SUBSCRIPTION_ID
 import com.v2ray.ang.AppConfig.PREF_IS_BOOTED
 import com.v2ray.ang.AppConfig.PREF_ROUTING_RULESET
@@ -473,7 +474,7 @@ object MmkvManager {
      * @return The list of all custom Geo sources saved by the user.
      */
     fun getCustomGeoSources(): List<String> {
-        val set = mainStorage.decodeStringSet(AppConfig.PREF_CUSTOM_GEO_SOURCES) ?: emptySet()
+        val set = mainStorage.decodeStringSet(PREF_CUSTOM_GEO_SOURCES) ?: emptySet()
         return set.toList()
     }
 
@@ -483,11 +484,11 @@ object MmkvManager {
      * @param url The custom Geo source url.
      */
     fun addCustomGeoSource(url: String) {
-        val currentSet = mainStorage.decodeStringSet(AppConfig.PREF_CUSTOM_GEO_SOURCES) ?: emptySet()
+        val currentSet = mainStorage.decodeStringSet(PREF_CUSTOM_GEO_SOURCES) ?: emptySet()
         val newSet = currentSet.toMutableSet().apply {
             add(url)
         }
-        mainStorage.encode(AppConfig.PREF_CUSTOM_GEO_SOURCES, newSet)
+        mainStorage.encode(PREF_CUSTOM_GEO_SOURCES, newSet)
     }
 
     /**
