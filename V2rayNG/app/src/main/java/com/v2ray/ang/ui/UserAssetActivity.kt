@@ -3,12 +3,9 @@ package com.v2ray.ang.ui
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.widget.ArrayAdapter
+import android.widget.ListView
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.widget.TextView
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -17,8 +14,6 @@ import android.view.Menu
 import android.view.MenuItem
 import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.R
@@ -95,109 +90,93 @@ class UserAssetActivity : HelperBaseActivity() {
         val customActionText = getString(R.string.asset_geo_files_sources_custom)
         itemsList.add(customActionText)
 
-        val recyclerView = RecyclerView(this).apply {
-            layoutManager = LinearLayoutManager(this@UserAssetActivity)
-        }
-        
-        var mainDialog: AlertDialog? = null
-        
-        val adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-                val view = LayoutInflater.from(parent.context).inflate(android.R.layout.simple_list_item_1, parent, false)
-                return object : RecyclerView.ViewHolder(view) {}
-            }
+        val listView = ListView(this)
+        var adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, itemsList)
+        listView.adapter = adapter
 
-            override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-                val textView = holder.itemView.findViewById<TextView>(android.R.id.text1)
-                textView.text = itemsList[position]
-                
-                holder.itemView.setOnClickListener {
-                    val i = holder.adapterPosition
-                    if (i == RecyclerView.NO_POSITION) return@setOnClickListener
-                    try {
-                        when {
-                            i == itemsList.lastIndex -> showCustomSourceInputDialog()
-                            i < builtInSize -> saveAndRefreshGeoSource(AppConfig.GEO_FILES_SOURCES[i])
-                            else -> saveAndRefreshGeoSource(savedCustomSources[i - builtInSize])
-                        }
-                    } catch (e: Exception) {
-                        LogUtil.e(AppConfig.TAG, "Failed to select geo source", e)
-                    }
-
-                    mainDialog?.dismiss()
-                }
-            }
-
-            override fun getItemCount(): Int = itemsList.size
-        }
-        recyclerView.adapter = adapter
-
-        mainDialog = AlertDialog.Builder(this)
-            .setView(recyclerView)
+        val mainDialog = AlertDialog.Builder(this)
+            .setView(listView)
             .create()
 
-        val swipeCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
-            override fun getSwipeDirs(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
-                val position = viewHolder.adapterPosition
-                if (position in builtInSize until itemsList.lastIndex) {
-                    return super.getSwipeDirs(recyclerView, viewHolder)
-                }
-                return 0
-            }
-
-            override fun onMove(r: RecyclerView, v: RecyclerView.ViewHolder, t: RecyclerView.ViewHolder): Boolean = false
-
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                val position = viewHolder.adapterPosition
-                val customIndex = position - builtInSize
-                val targetUrl = savedCustomSources[customIndex]
-
-                adapter.notifyItemChanged(position)
-
-                if (direction == ItemTouchHelper.RIGHT) {
-                    AlertDialog.Builder(this@UserAssetActivity)
-                        .setTitle(getString(R.string.asset_geo_files_sources_delete_title))
-                        .setMessage(getString(R.string.asset_geo_files_sources_delete_message, targetUrl))
-                        .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                            MmkvManager.removeCustomGeoSource(targetUrl)
-                            if (getGeoFilesSources() == targetUrl) {
-                                saveAndRefreshGeoSource(AppConfig.GEO_FILES_SOURCES.first())
+        listView.setOnItemClickListener { _, _, i, _ ->
+            try {
+                when {
+                    i == itemsList.lastIndex -> {
+                        showCustomSourceInputDialog()
+                        mainDialog.dismiss()
+                    }
+                    i < builtInSize -> {
+                        val value = AppConfig.GEO_FILES_SOURCES[i]
+                        saveAndRefreshGeoSource(value)
+                        mainDialog.dismiss()
+                    }
+                    else -> {
+                        val customIndex = i - builtInSize
+                        val targetUrl = savedCustomSources[customIndex]
+                        
+                        showEditCustomSourceDialog(targetUrl) { newUrl ->
+                            if (newUrl.isNotEmpty() && newUrl != targetUrl) {
+                                MmkvManager.removeCustomGeoSource(targetUrl)
+                                MmkvManager.addCustomGeoSource(newUrl)
+                                
+                                if (getGeoFilesSources() == targetUrl) {
+                                    saveAndRefreshGeoSource(newUrl)
+                                }
+                                
+                                savedCustomSources = MmkvManager.getCustomGeoSources()
+                                itemsList.clear()
+                                itemsList.addAll(AppConfig.GEO_FILES_SOURCES)
+                                itemsList.addAll(savedCustomSources)
+                                itemsList.add(customActionText)
+                                
+                                adapter = ArrayAdapter(this@UserAssetActivity, android.R.layout.simple_list_item_1, itemsList)
+                                listView.adapter = adapter
                             }
-                            dialog.dismiss()
-                            
-                            savedCustomSources = MmkvManager.getCustomGeoSources()
-                            itemsList.clear()
-                            itemsList.addAll(AppConfig.GEO_FILES_SOURCES)
-                            itemsList.addAll(savedCustomSources)
-                            itemsList.add(customActionText)
-                            adapter.notifyDataSetChanged()
-                        }
-                        .setNegativeButton(android.R.string.cancel) { dialog, _ -> dialog.dismiss() }
-                        .show()
-
-                } else if (direction == ItemTouchHelper.LEFT) {
-                    showEditCustomSourceDialog(targetUrl) { newUrl ->
-                        if (newUrl.isNotEmpty() && newUrl != targetUrl) {
-                            MmkvManager.removeCustomGeoSource(targetUrl)
-                            MmkvManager.addCustomGeoSource(newUrl)
-                            
-                            if (getGeoFilesSources() == targetUrl) {
-                                saveAndRefreshGeoSource(newUrl)
-                            }
-                            
-                            savedCustomSources = MmkvManager.getCustomGeoSources()
-                            itemsList.clear()
-                            itemsList.addAll(AppConfig.GEO_FILES_SOURCES)
-                            itemsList.addAll(savedCustomSources)
-                            itemsList.add(customActionText)
-                            adapter.notifyDataSetChanged()
                         }
                     }
                 }
+            } catch (e: Exception) {
+                LogUtil.e(AppConfig.TAG, "Failed to select geo files sources", e)
+                mainDialog.dismiss()
             }
         }
 
-        ItemTouchHelper(swipeCallback).attachToRecyclerView(recyclerView)
+        listView.setOnItemLongClickListener { _, _, i, _ ->
+            if (i >= builtInSize && i < itemsList.lastIndex) {
+                val customIndex = i - builtInSize
+                val targetUrl = savedCustomSources[customIndex]
+
+                AlertDialog.Builder(this@UserAssetActivity)
+                    .setTitle(getString(R.string.asset_geo_files_sources_delete_title))
+                    .setMessage(getString(R.string.asset_geo_files_sources_delete_message, targetUrl))
+                    .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                        MmkvManager.removeCustomGeoSource(targetUrl)
+
+                        if (getGeoFilesSources() == targetUrl) {
+                            saveAndRefreshGeoSource(AppConfig.GEO_FILES_SOURCES.first())
+                        }
+                        
+                        dialog.dismiss()
+                        
+                        savedCustomSources = MmkvManager.getCustomGeoSources()
+                        itemsList.clear()
+                        itemsList.addAll(AppConfig.GEO_FILES_SOURCES)
+                        itemsList.addAll(savedCustomSources)
+                        itemsList.add(customActionText)
+                        
+                        adapter = ArrayAdapter(this@UserAssetActivity, android.R.layout.simple_list_item_1, itemsList)
+                        listView.adapter = adapter
+                    }
+                    .setNegativeButton(android.R.string.cancel) { dialog, _ ->
+                        dialog.dismiss()
+                    }
+                    .show()
+                true 
+            } else {
+                false 
+            }
+        }
+
         mainDialog.show()
     }
 
