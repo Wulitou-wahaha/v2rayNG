@@ -98,7 +98,9 @@ class UserAssetActivity : HelperBaseActivity() {
         val recyclerView = RecyclerView(this).apply {
             layoutManager = LinearLayoutManager(this@UserAssetActivity)
         }
-
+        
+        var mainDialog: AlertDialog? = null
+        
         val adapter = object : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
                 val view = LayoutInflater.from(parent.context).inflate(android.R.layout.simple_list_item_1, parent, false)
@@ -122,7 +124,7 @@ class UserAssetActivity : HelperBaseActivity() {
                         LogUtil.e(AppConfig.TAG, "Failed to select geo source", e)
                     }
 
-                    mainDialog.dismiss()
+                    mainDialog?.dismiss()
                 }
             }
 
@@ -130,7 +132,7 @@ class UserAssetActivity : HelperBaseActivity() {
         }
         recyclerView.adapter = adapter
 
-        val mainDialog = AlertDialog.Builder(this)
+        mainDialog = AlertDialog.Builder(this)
             .setView(recyclerView)
             .create()
 
@@ -153,7 +155,7 @@ class UserAssetActivity : HelperBaseActivity() {
                 adapter.notifyItemChanged(position)
 
                 if (direction == ItemTouchHelper.RIGHT) {
-                    AlertDialog.Builder(this@@UserAssetActivity)
+                    AlertDialog.Builder(this@UserAssetActivity)
                         .setTitle(getString(R.string.asset_geo_files_sources_delete_title))
                         .setMessage(getString(R.string.asset_geo_files_sources_delete_message, targetUrl))
                         .setPositiveButton(android.R.string.ok) { dialog, _ ->
