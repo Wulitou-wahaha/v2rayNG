@@ -98,6 +98,18 @@ class UserAssetActivity : HelperBaseActivity() {
             .setView(listView)
             .create()
 
+        val refreshListViewData = {
+            savedCustomSources = MmkvManager.getCustomGeoSources()
+            itemsList.apply {
+                clear()
+                addAll(AppConfig.GEO_FILES_SOURCES)
+                addAll(savedCustomSources)
+                add(customActionText)
+            }
+            adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, itemsList)
+            listView.adapter = adapter
+        }
+
         listView.setOnItemClickListener { _, _, i, _ ->
             try {
                 when {
@@ -106,90 +118,62 @@ class UserAssetActivity : HelperBaseActivity() {
                         mainDialog.dismiss()
                     }
                     i < builtInSize -> {
-                        val value = AppConfig.GEO_FILES_SOURCES[i]
-                        saveAndRefreshGeoSource(value)
+                        saveAndRefreshGeoSource(AppConfig.GEO_FILES_SOURCES[i])
                         mainDialog.dismiss()
                     }
                     else -> {
-                        val customIndex = i - builtInSize
-                        val targetUrl = savedCustomSources[customIndex]
-                        
+                        val targetUrl = savedCustomSources[i - builtInSize]
+                        val options = arrayOf(
+                            getString(R.string.asset_geo_files_sources_option_use),
+                            getString(R.string.asset_geo_files_sources_option_edit),
+                            getString(R.string.asset_geo_files_sources_option_remove)
+                        )
+
                         AlertDialog.Builder(this@UserAssetActivity)
                             .setTitle(getString(R.string.asset_geo_files_sources_option))
-                            .setItems(arrayOf(getString(R.string.asset_geo_files_sources_option_use), getString(R.string.asset_geo_files_sources_option_edit))) { dialogOptions, which ->
+                            .setItems(options) { dialogOptions, which ->
+                                dialogOptions.dismiss()
                                 when (which) {
                                     0 -> {
                                         saveAndRefreshGeoSource(targetUrl)
-                                        dialogOptions.dismiss()
-                                        mainDialog.dismiss() 
+                                        mainDialog.dismiss()
                                     }
                                     1 -> {
-                                        dialogOptions.dismiss()
                                         showEditCustomSourceDialog(targetUrl) { newUrl ->
                                             if (newUrl.isNotEmpty() && newUrl != targetUrl) {
                                                 MmkvManager.removeCustomGeoSource(targetUrl)
                                                 MmkvManager.addCustomGeoSource(newUrl)
-                                                
                                                 if (getGeoFilesSources() == targetUrl) {
                                                     saveAndRefreshGeoSource(newUrl)
                                                 }
-                                                
-                                                savedCustomSources = MmkvManager.getCustomGeoSources()
-                                                itemsList.clear()
-                                                itemsList.addAll(AppConfig.GEO_FILES_SOURCES)
-                                                itemsList.addAll(savedCustomSources)
-                                                itemsList.add(customActionText)
-                                                
-                                                adapter = ArrayAdapter(this@UserAssetActivity, android.R.layout.simple_list_item_1, itemsList)
-                                                listView.adapter = adapter
+                                                refreshListViewData()
                                             }
                                         }
                                     }
+                                    2 -> {
+                                        AlertDialog.Builder(this@UserAssetActivity)
+                                            .setTitle(getString(R.string.asset_geo_files_sources_delete_title))
+                                            .setMessage(getString(R.string.asset_geo_files_sources_delete_message, targetUrl))
+                                            .setPositiveButton(android.R.string.ok) { dialog, _ ->
+                                                MmkvManager.removeCustomGeoSource(targetUrl)
+                                                if (getGeoFilesSources() == targetUrl) {
+                                                    saveAndRefreshGeoSource(AppConfig.GEO_FILES_SOURCES.first())
+                                                }
+                                                dialog.dismiss()
+                                                refreshListViewData()
+                                            }
+                                            .setNegativeButton(android.R.string.cancel) { dialog, _ -> dialog.dismiss() }
+                                            .show()
+                                    }
                                 }
-                        }
-                        .setNegativeButton(android.R.string.cancel) { dialogOptions, _ -> dialogOptions.dismiss() }
-                        .show()
+                            }
+                            .setNegativeButton(android.R.string.cancel) { dialogOptions, _ -> dialogOptions.dismiss() }
+                            .show()
                     }
                 }
             } catch (e: Exception) {
                 LogUtil.e(AppConfig.TAG, "Failed to select geo files sources", e)
                 mainDialog.dismiss()
-            }
-        }
-
-        listView.setOnItemLongClickListener { _, _, i, _ ->
-            if (i >= builtInSize && i < itemsList.lastIndex) {
-                val customIndex = i - builtInSize
-                val targetUrl = savedCustomSources[customIndex]
-
-                AlertDialog.Builder(this@UserAssetActivity)
-                    .setTitle(getString(R.string.asset_geo_files_sources_delete_title))
-                    .setMessage(getString(R.string.asset_geo_files_sources_delete_message, targetUrl))
-                    .setPositiveButton(android.R.string.ok) { dialog, _ ->
-                        MmkvManager.removeCustomGeoSource(targetUrl)
-
-                        if (getGeoFilesSources() == targetUrl) {
-                            saveAndRefreshGeoSource(AppConfig.GEO_FILES_SOURCES.first())
-                        }
-                        
-                        dialog.dismiss()
-                        
-                        savedCustomSources = MmkvManager.getCustomGeoSources()
-                        itemsList.clear()
-                        itemsList.addAll(AppConfig.GEO_FILES_SOURCES)
-                        itemsList.addAll(savedCustomSources)
-                        itemsList.add(customActionText)
-                        
-                        adapter = ArrayAdapter(this@UserAssetActivity, android.R.layout.simple_list_item_1, itemsList)
-                        listView.adapter = adapter
-                    }
-                    .setNegativeButton(android.R.string.cancel) { dialog, _ ->
-                        dialog.dismiss()
-                    }
-                    .show()
-                true 
-            } else {
-                false 
             }
         }
 

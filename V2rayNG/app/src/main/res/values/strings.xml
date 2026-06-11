@@ -139,6 +139,7 @@
     <string name="asset_geo_files_sources_option">Please select an action</string>
     <string name="asset_geo_files_sources_option_use">Use this source link</string>
     <string name="asset_geo_files_sources_option_edit">Edit the source link</string>
+    <string name="asset_geo_files_sources_option_remove">Remove the source link</string>
     <string name="asset_geo_files_sources_custom">Custom...</string>
     <string name="asset_geo_files_sources_edit_title">Edit Custom Geo Source URL</string>
     <string name="asset_geo_files_sources_input_hint">https://example.com/download/</string>

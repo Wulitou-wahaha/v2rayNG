@@ -136,6 +136,7 @@
     <string name="asset_geo_files_sources_option">请选择操作</string>
     <string name="asset_geo_files_sources_option_use">使用此源</string>
     <string name="asset_geo_files_sources_option_edit">编辑链接</string>
+    <string name="asset_geo_files_sources_option_remove">删除链接</string>
     <string name="asset_geo_files_sources_custom">自定义输入...</string>
     <string name="asset_geo_files_sources_edit_title">请修改自定义 Geo 资源链接</string>
     <string name="asset_geo_files_sources_input_title">请输入自定义 Geo 资源链接</string>
