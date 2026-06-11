@@ -114,25 +114,41 @@ class UserAssetActivity : HelperBaseActivity() {
                         val customIndex = i - builtInSize
                         val targetUrl = savedCustomSources[customIndex]
                         
-                        showEditCustomSourceDialog(targetUrl) { newUrl ->
-                            if (newUrl.isNotEmpty() && newUrl != targetUrl) {
-                                MmkvManager.removeCustomGeoSource(targetUrl)
-                                MmkvManager.addCustomGeoSource(newUrl)
-                                
-                                if (getGeoFilesSources() == targetUrl) {
-                                    saveAndRefreshGeoSource(newUrl)
+                        AlertDialog.Builder(this@UserAssetActivity)
+                            .setTitle(getString(R.string.asset_geo_files_sources_option))
+                            .setItems(arrayOf(getString(R.string.asset_geo_files_sources_option_use), getString(R.string.asset_geo_files_sources_option_edit))) { dialogOptions, which ->
+                                when (which) {
+                                    0 -> {
+                                        saveAndRefreshGeoSource(targetUrl)
+                                        dialogOptions.dismiss()
+                                        mainDialog.dismiss() 
+                                    }
+                                    1 -> {
+                                        dialogOptions.dismiss()
+                                        showEditCustomSourceDialog(targetUrl) { newUrl ->
+                                            if (newUrl.isNotEmpty() && newUrl != targetUrl) {
+                                                MmkvManager.removeCustomGeoSource(targetUrl)
+                                                MmkvManager.addCustomGeoSource(newUrl)
+                                                
+                                                if (getGeoFilesSources() == targetUrl) {
+                                                    saveAndRefreshGeoSource(newUrl)
+                                                }
+                                                
+                                                savedCustomSources = MmkvManager.getCustomGeoSources()
+                                                itemsList.clear()
+                                                itemsList.addAll(AppConfig.GEO_FILES_SOURCES)
+                                                itemsList.addAll(savedCustomSources)
+                                                itemsList.add(customActionText)
+                                                
+                                                adapter = ArrayAdapter(this@UserAssetActivity, android.R.layout.simple_list_item_1, itemsList)
+                                                listView.adapter = adapter
+                                            }
+                                        }
+                                    }
                                 }
-                                
-                                savedCustomSources = MmkvManager.getCustomGeoSources()
-                                itemsList.clear()
-                                itemsList.addAll(AppConfig.GEO_FILES_SOURCES)
-                                itemsList.addAll(savedCustomSources)
-                                itemsList.add(customActionText)
-                                
-                                adapter = ArrayAdapter(this@UserAssetActivity, android.R.layout.simple_list_item_1, itemsList)
-                                listView.adapter = adapter
-                            }
                         }
+                        .setNegativeButton(android.R.string.cancel) { dialogOptions, _ -> dialogOptions.dismiss() }
+                        .show()
                     }
                 }
             } catch (e: Exception) {
